@@ -1,0 +1,98 @@
+/*
+** main.c for BocalEmblem in /home/guigui/BocalEmblem
+** 
+** Made by guigui
+** Login   <guigui@epitech.net>
+** 
+** Started on  Fri May 15 20:22:08 2015 guigui
+** Last update Sun May 17 18:09:39 2015 guigui
+*/
+
+#include <stdlib.h>
+#include "strategic.h"
+#include "my.h"
+#include "my_printf.h"
+
+void	init_game()
+{
+  gbgc_init();
+  init_checkerrorreturn();
+}
+
+void	end_game()
+{
+  gbgc_erase(NULL);
+  if (get_crtreturn(NULL))
+    my_putstr(DEFERR);
+}
+
+int	playloop(t_chk *map, int *loop)
+{
+  char	*tmp;
+
+  if (get_crtreturn(NULL) || map == NULL || loop == NULL ||
+      map->data == NULL || map->data->map == NULL ||
+      !is_twoplayer(map->data) || !(*loop = 1))
+    return (0);
+  if (map->data->actplayer == BLUEPL && (tmp = get_next_line(0)) != NULL)
+    {
+      exec_ins(map->data, tmp);
+      gbgc_free(NULL, tmp);
+      if (is_allunitused(map->data))
+	map->data->pass(map->data);
+      if (!is_oneredalive(map->data) || !is_onebluealive(map->data))
+	*loop = 0;
+      else
+	my_printf("\n%s", PROMPT);
+    }
+  else if (map->data->actplayer == REDPLY)
+    {
+      ia_play(map->data);
+      my_printf("\n%s", PROMPT);
+    }
+  else
+    *loop = 0;
+  return (1);
+}
+
+int	playmap(t_chk *map)
+{
+  char	*tmp;
+  int	loop;
+
+  if (get_crtreturn(NULL))
+    return (0);
+  if (map == NULL || map->data == NULL || map->data->map == NULL ||
+      !is_twoplayer(map->data) || !(loop = 1))
+    return (dbgerr("Error: playmap: Invalid or NULL parameter"));
+  my_putstr(PROMPT);
+  while (loop && is_oneredalive(map->data) && is_onebluealive(map->data) &&
+	 !get_crtreturn(NULL) && playloop(map, &loop));
+  if (!get_crtreturn(NULL))
+    {
+      my_printf("\n%s win this war.\n",
+		(is_onebluealive(map->data)) ? BLUEUN : REDUNI);
+    }
+  return (1);
+}
+
+int	main(int argc, char **argv)
+{
+  int	i;
+  t_chk	*map;
+
+  i = 0;
+  if (argc <= 1 || argv == NULL)
+    my_putstr(DEFERR);
+  else
+    {
+      init_game();
+      while (++i < argc && !get_crtreturn(NULL))
+	{
+	  playmap(map = get_map(argv[i]));
+	  delete_chk(map);
+	}
+      end_game();
+    }
+  return (0);
+}
